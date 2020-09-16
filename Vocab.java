@@ -1,6 +1,6 @@
 import java.io.IOException;
 import java.util.StringTokenizer;
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -38,7 +38,7 @@ public class Vocab {
                     Context context
                     ) throws IOException, InterruptedException {
                 int count = 0;
-                ArrayList<Integer> newList = new ArrayList<Integer>();
+                HashSet<Integer> newList = new HashSet<Integer>();
                 for (IntWritable val : values) {
                     if (!newList.contains(val.get())) {
                         count++;
