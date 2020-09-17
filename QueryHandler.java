@@ -24,7 +24,8 @@ public class QueryHandler {
                 
                 //read a line in indexer file
                 String[] lines = value.toString().split(System.getProperty("line.separator"));
-                
+                Configuration conf = context.getConfiguration();
+
                 for (String value_line :lines){
                     //read indexer line
                     StringTokenizer tfidf = new StringTokenizer(value_line);
@@ -37,15 +38,32 @@ public class QueryHandler {
                         double weight = Double.parseDouble(tfidf.nextToken());
                         weights.put(word, weight);
                     }
+
+                        //read titles
+                    String titles_text = conf.get("titles");
+                    Map<Integer, String> titles = new HashMap<Integer, String>();
+                    
+                    String[] titles_lines = titles_text.split("\n");
+                    for (String line : titles_lines){
+                        StringTokenizer titles_itr = new StringTokenizer(line);
+                        int id = Integer.parseInt(titles_itr.nextToken());
+                        String title = "";
+                        while(titles_itr.hasMoreTokens())
+                            title+=titles_itr.nextToken();
+                        titles.put(id, title);
+                    }
+
                     //read query
-                    Configuration conf = context.getConfiguration();
                     String query = conf.get("query");
                     StringTokenizer query_itr = new StringTokenizer(query);
+
+
                     // compute
                     double result = 0;
                     while (query_itr.hasMoreTokens())
                         result+=weights.getOrDefault(query_itr.nextToken(), 0.0); 
-                    context.write(new DoubleWritable(result),new Text(Integer.toString(docId)));
+                    
+                    context.write(new DoubleWritable(result),new Text(titles.get(docId)));
                 }
             }
     }
@@ -56,27 +74,12 @@ public class QueryHandler {
             public void reduce(DoubleWritable key, Iterable<Text> values,
                     Context context
                     ) throws IOException, InterruptedException {
-                //read titles
-                Configuration conf = context.getConfiguration();
-                String titles_text = conf.get("titles");
-                Map<Integer, String> titles = new HashMap<Integer, String>();
-                
-                String[] titles_lines = titles_text.split("\n");
-                for (String line : titles_lines){
-                    StringTokenizer titles_itr = new StringTokenizer(line);
-                    int id = Integer.parseInt(titles_itr.nextToken());
-                    String title = "";
-                    while(titles_itr.hasMoreTokens())
-                        title+=titles_itr.nextToken();
-                    titles.put(id, title);
-                }
                 
                 // change id to titels
                 for (Text val: values){
-                        int id = Integer.parseInt(val.toString().replaceAll("[^0-9]", ""));
-                        context.write(key, new Text(titles.get(id)));
-                    }
+                    context.write(key,val);
                 }
+            }
     }
 
     public static void main(String[] args) throws Exception {
