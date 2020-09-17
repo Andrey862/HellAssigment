@@ -11,8 +11,8 @@ public class test {
  
     void solve() {
         //your code here
-        String str = in.next().replaceAll("[^a-zA-Z- ]", "");
-        out.println(str);
+       StringTokenizer st = new StringTokenizer("a b c");
+       out.println("\t12ad2".replaceAll("[^0-9]", ""));
     }
  
     void run() throws IOException {
