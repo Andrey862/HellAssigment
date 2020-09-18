@@ -83,7 +83,7 @@ public class Query {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
+        if (args.length < 4) {
             System.err.println("Usage: query <index> <out> <n> <query>");
             System.exit(2);
         }
