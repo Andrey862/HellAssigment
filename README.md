@@ -1,4 +1,4 @@
-# HellAssigment
+# MapReduce: Simple Text Indexer
 
 ## 1. Build Vocabulary and Index
 
