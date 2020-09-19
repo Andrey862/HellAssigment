@@ -75,5 +75,3 @@ The project was divided in 4 phases and both members actively participated. The 
    - [Assignment №1. MapReduce. Simple Text Indexer](https://hackmd.io/@BigDataInnopolis/HyrkXRQPH#Memory-Consumption)
    - [JSONObject](https://developer.android.com/reference/org/json/JSONObject)
    - [MapReduce Tutorial](https://hadoop.apache.org/docs/current/hadoop-mapreduce-client/hadoop-mapreduce-client-core/MapReduceTutorial.html)
-```
-
