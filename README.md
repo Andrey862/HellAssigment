@@ -65,6 +65,14 @@ The result is written to the Hadoop file system and later is used as input file 
 
 Ranker Engine takes the second output of Indexing Engine, i.e output of Indexer which includes multiple JSON strings representing documents, as input. It will calculate the relevance score of each document with respect to the query string using the basic Vector Space Model function `r(q, d) = sum(qi*di)` where `qi`, `di` is TF/IDF weight of i-th term in the query, and document respectively. The score of each document and its title are written to the Hadoop file system and the top `n` results are printed on `stdout`. In Hadoop MapReduce terms, the output key is of DoubleWritable class, and represents a document's score; the output value is the document's title of Text class.
 
+### Test
+
+The following screenshots show the output of testing the search engine on a sample database with 6 entries and the extracted English Wikipedia dump.
+
+![test1](./img/test1.png)
+
+![test2](./img/test2.png)
+
 ## Contribution
 
 The project was divided in 4 phases and both members actively participated. The following diagram summarizes our contribution.
