@@ -52,15 +52,13 @@ public class VocabIndex {
             public void reduce(Text key, Iterable<IntWritable> values,
                     Context context
                     ) throws IOException, InterruptedException {
-                int count = 0;
-                HashSet<Integer> newList = new HashSet<Integer>();
+                HashSet<Integer> set = new HashSet<Integer>();
                 for (IntWritable val : values) {
-                    if (!newList.contains(val.get())) {
-                        count++;
-                        newList.add(val.get());
+                    if (!set.contains(val.get())) {
+                        set.add(val.get());
                     }
                 }
-                result.set(count);
+                result.set(set.size());
                 context.write(key, result);
                     }
     }
@@ -162,7 +160,6 @@ public class VocabIndex {
         Job job1 = Job.getInstance(conf1, "vocab");
         job1.setJarByClass(VocabIndex.class);
         job1.setMapperClass(VocabMapper.class);
-        job1.setCombinerClass(VocabReducer.class);
         job1.setReducerClass(VocabReducer.class);
         job1.setOutputKeyClass(Text.class);
         job1.setOutputValueClass(IntWritable.class);
