@@ -25,6 +25,7 @@ import org.json.JSONException;
 public class Query {
 
     public static class DescendingKeyComparator extends WritableComparator {
+        // sorting output in descending order
         protected DescendingKeyComparator() {
             super(DoubleWritable.class, true);
         }
@@ -45,11 +46,13 @@ public class Query {
             public void reduce(DoubleWritable key, Iterable<Text> values,
                     Context context
                     ) throws IOException, InterruptedException {
+                
+                // Simple reducer
                 for (Text val : values) {
                     title.set(val.toString());
                     context.write(key, title);
                 }
-                    }
+            }
     }
 
     public static class QueryMapper
@@ -60,12 +63,15 @@ public class Query {
             public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
                 try {
+                    // read index file
                     JSONObject json = new JSONObject(value.toString());
                     title.set(json.getString("title"));
                     Configuration conf = context.getConfiguration();
+                    // read query
                     String query = conf.get("query");
                     query = query.replaceAll("(\\\\n)+", " ");
                     query = query.replaceAll("[^a-zA-Z- ]", "").toLowerCase();
+                    // get score of a query for this document
                     StringTokenizer itr = new StringTokenizer(query);
                     Double score = 0.0;
                     while (itr.hasMoreTokens()) {
@@ -74,12 +80,12 @@ public class Query {
                         } catch (JSONException e) {
                         }
                     }
-
+                    // write score->title
                     result.set(score);
                     context.write(result, title);
                 } catch (JSONException e) {
                 }
-                    }
+            }
     }
 
     public static void main(String[] args) throws Exception {
@@ -87,6 +93,7 @@ public class Query {
             System.err.println("Usage: query <index> <out> <n> <query>");
             System.exit(2);
         }
+        // process query
         Configuration conf = new Configuration();
         conf.set("query", args[3]);
         Job job = Job.getInstance(conf, "query");
@@ -99,6 +106,8 @@ public class Query {
         job.setSortComparatorClass(DescendingKeyComparator.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        //read result from dfs and print top n results to console
         if (job.waitForCompletion(true)) {
             try {
                 Configuration conf1 = new Configuration();
@@ -119,6 +128,5 @@ public class Query {
             System.exit(0);
         }
         System.exit(1);
-
     }
 }

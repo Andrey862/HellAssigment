@@ -27,17 +27,21 @@ public class VocabIndex {
 
     public static class VocabMapper
             extends Mapper<Object, Text, Text, IntWritable>{
-
+            // Making Vocabulary
+            
             public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
                 try {
+                    //read the document
                     JSONObject json = new JSONObject(value.toString());
                     int id = Integer.parseInt(json.getString("id"));
                     String text = json.getString("text");
+                    //remove non-letters, make everything to lower case
                     text = text.replaceAll("(\\\\n)+", " ");
                     text = text.replaceAll("[^a-zA-Z- ]", "").toLowerCase();
                     StringTokenizer itr = new StringTokenizer(text);
                     while (itr.hasMoreTokens()) {
+                        // word -> docid
                         context.write(new Text(itr.nextToken()), new IntWritable(id));
                     }
                 } catch (JSONException e) {
@@ -52,6 +56,8 @@ public class VocabIndex {
             public void reduce(Text key, Iterable<IntWritable> values,
                     Context context
                     ) throws IOException, InterruptedException {
+                
+                // count in how many documents a word appeared
                 HashSet<Integer> set = new HashSet<Integer>();
                 for (IntWritable val : values) {
                     if (!set.contains(val.get())) {
@@ -60,31 +66,36 @@ public class VocabIndex {
                 }
                 result.set(set.size());
                 context.write(key, result);
-                    }
+            }
     }
 
     public static class IndexMapper
             extends Mapper<Object, Text, Text, Text>{
             private Text word = new Text();
             private Text doc = new Text();
+            // Making Indexer
 
             public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
                 try {
+                    //same as Vocab mapper but key and value are swapped
+                    // read documents
                     JSONObject json = new JSONObject(value.toString());
                     JSONObject docJSON = new JSONObject(json, new String[]{"id", "title"});
                     doc.set(docJSON.toString());
                     String text = json.getString("text");
+                    //remove non-letters, change to lowercase
                     text = text.replaceAll("(\\\\n)+", " ");
                     text = text.replaceAll("[^a-zA-Z- ]", "").toLowerCase();
                     StringTokenizer itr = new StringTokenizer(text);
                     while (itr.hasMoreTokens()) {
                         word.set(itr.nextToken());
+                        // docid -> word
                         context.write(doc, word);
                     }
                 } catch (JSONException e) {
                 }
-                    }
+            }
     }
 
     public static class IndexReducer
@@ -98,6 +109,7 @@ public class VocabIndex {
             @Override
             public void setup(Context context) throws IOException,
                    InterruptedException {
+                       //read the Vocab file as cache
                        conf = context.getConfiguration();
                        URI[] vocabURIs = Job.getInstance(conf).getCacheFiles();
                        for (URI vocabURI : vocabURIs) {
@@ -109,6 +121,7 @@ public class VocabIndex {
 
             private void vocabFile(String fileName) {
                 try {
+                    // read dictionary of (word-># of documents where the word occured)
                     fis = new BufferedReader(new FileReader(fileName));
                     String line = null;
                     while ((line = fis.readLine()) != null) {
@@ -125,14 +138,18 @@ public class VocabIndex {
             public void reduce(Text key, Iterable<Text> values,
                     Context context
                     ) throws IOException, InterruptedException {
+                // calculates idf/tf
+
                 Map<String, Integer> tfs = new HashMap<String, Integer>();
                 Map<String, Double> vector = new HashMap<String, Double>();
 
+                // calculates tf
                 for (Text val : values) {
                     String word = val.toString();
                     tfs.put(word, tfs.getOrDefault(word, 0)+1);
                 }
 
+                // calculates tf/idf^2 for each word in document
                 for (Map.Entry<String, Integer> entry : tfs.entrySet()) { 
                     String word = entry.getKey();
                     Double idf = idfs.getOrDefault(word, 1) * 1.0;
@@ -141,14 +158,15 @@ public class VocabIndex {
                 }
 
                 try {
+                    //write the result
                     JSONObject docJSON = new JSONObject(key.toString());
                     docJSON.put("vector", new JSONObject(vector));
-		    result.set(docJSON.toString());
+		            result.set(docJSON.toString());
                     context.write(result, NullWritable.get());
                 } catch (JSONException e) {
                 }
 
-                    }
+            }
     }
 
     public static void main(String[] args) throws Exception {
@@ -156,6 +174,7 @@ public class VocabIndex {
             System.err.println("Usage: index <in> <vocabout> <indexout>");
             System.exit(2);
         }
+        // run Vocab
         Configuration conf1 = new Configuration();
         Job job1 = Job.getInstance(conf1, "vocab");
         job1.setJarByClass(VocabIndex.class);
@@ -172,6 +191,7 @@ public class VocabIndex {
             System.exit(1);
         }
 
+        // run Indexer
         Configuration conf2 = new Configuration();
         Job job2 = Job.getInstance(conf2, "index");
         job2.setJarByClass(VocabIndex.class);
